@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作流程與作業指引管理系統</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #0f172a;
+        }
+
+        /* 導覽列分頁按鈕 */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background-color: #e2e8f0;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background-color: #cbd5e1;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* 分頁內容區塊 */
+        .tab-content {
+            display: none;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2.section-title {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            color: #0f172a;
+        }
+
+        /* 清單樣式 */
+        .item-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .item-list li {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .item-list li.completed span.item-text {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+
+        .item-text {
+            flex-grow: 1;
+            cursor: pointer;
+            word-break: break-all;
+            margin-right: 12px;
+        }
+
+        /* 新增項目表單 */
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .add-form input {
+            flex-grow: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .add-form input:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 按鈕樣式 */
+        button.btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button.btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.btn-danger {
+            background-color: var(--danger-color);
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+
+        button.btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .category-group {
+            margin-bottom: 20px;
+        }
+
+        .category-group h3 {
+            font-size: 1.05rem;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>工作流程與作業指引管理系統</h1>
+    </header>
+
+    <!-- 分頁導覽列 -->
+    <div class="tabs" id="tabsNav">
+        <button class="tab-btn active" onclick="switchTab(0)">一、日結流程</button>
+        <button class="tab-btn" onclick="switchTab(1)">二、薪資</button>
+        <button class="tab-btn" onclick="switchTab(2)">三、10/30 會計室通知</button>
+        <button class="tab-btn" onclick="switchTab(3)">四、月報作業流程</button>
+        <button class="tab-btn" onclick="switchTab(4)">五、法扣</button>
+    </div>
+
+    <!-- 容器：動態生成分頁內容 -->
+    <div id="tabsContainer"></div>
+</div>
+
+<script>
+    // 預設資料結構
+    const defaultData = [
+        {
+            title: "一、日結流程",
+            subgroups: [
+                {
+                    name: "基本日結",
+                    items: [
+                        { text: "4434 入帳（檢帳以外的錯誤）", completed: false },
+                        { text: "全部試算：4808 → 4438 → 409B", completed: false },
+                        { text: "帳合後：4B25 ×1（沒印到用 4B01 查詢列印）", completed: false },
+                        { text: "報表列印：4092 ×3（交接時 ×4）、4809 ×2（會計要 4092＋4809；出納要 4092）", completed: false },
+                        { text: "日結流程步驟：4092 → 4425 → 4809", completed: false }
+                    ]
+                },
+                {
+                    name: "請款／繳款",
+                    items: [
+                        { text: "請款（9點前入帳）：前檯 4305 → 後台 4311 → 保金來源 4341（4461→？）", completed: false },
+                        { text: "繳款：前檯 4351 → 後台 4361，印一張 R", completed: false },
+                        { text: "4615：①→收入→營業用郵資→收入合計", completed: false }
+                    ]
+                },
+                {
+                    name: "其他事項",
+                    items: [
+                        { text: "郵箱給會計：郵資券作廢要蓋廢券", completed: false },
+                        { text: "壽險還款：3310 → 是 → 印 2 份 → 報表", completed: false },
+                        { text: "場地租金：①郵政 → 4198023 → $ → 摘要 → $ 給前檯做收", completed: false },
+                        { text: "電話：02-2321-5865", completed: false }
+                    ]
+                }
+            ]
+        },
+        {
+            title: "二、薪資",
+            subgroups: [
+                {
+                    name: "金東里（存款人）",
+                    items: [
+                        { text: "前台：1525 → 0501 → 0514（轉帳⑨薪存）→ 1512、1110", completed: false },
+                        { text: "後台：4511（①→③→408）→ 4525 → 4516（①-③-408），4516 改 4528", completed: false }
+                    ]
+                },
+                {
+                    name: "烽陞商行",
+                    items: [
+                        { text: "前台：1525 → 0501 → 0514", completed: false },
+                        { text: "後台：4525 → 1733（要確定有$）→ ①→⑩→款項細目⑲→E→1002（外界薪資有$）→ 4528 沖消（核對$無誤）", completed: false }
+                    ]
+                },
+                {
+                    name: "查詢與補充",
+                    items: [
+                        { text: "查沖帳紀錄：4511 → 4581（要印）；4516 → 4582", completed: false },
+                        { text: "查批次：4530（有資料要印）", completed: false },
+                        { text: "4581 查帳、4528 沖；法扣做完要沖帳（1229、0604、1521）；VISA 餘額轉置（1129、1320）", completed: false }
+                    ]
+                }
+            ]
+        },
+        {
+            title: "三、10/30 會計室通知",
+            subgroups: [
+                {
+                    name: "通知事項",
+                    items: [
+                        { text: "✓ 檢核 9-10 月統一發票檢核表（4X45）", completed: true },
+                        { text: "✓ 有收寄特約郵件支局，依月底作帳列特約郵資收入（41021263）；手寫 4615、4651，A+B", completed: true },
+                        { text: "沖轉：210503D1 定期利息補充保費、21050312 定期利息所得稅；手寫 6105，沖 4511＋4611", completed: false },
+                        { text: "✗（劃掉）月結營業郵資機月報（L463）", completed: false },
+                        { text: "手寫：4593 印 2 份，一份給會計", completed: false }
+                    ]
+                }
+            ]
+        },
+        {
+            title: "四、月報作業流程",
+            subgroups: [
+                {
+                    name: "第一梯次（月報日當日寄出）",
+                    items: [
+                        { text: "現金及營業收支月報 4901（年底加印年報）", completed: false },
+                        { text: "其他預收／預付款結餘表 4593（結完日帳後儘速列印）", completed: false },
+                        { text: "出租專用信箱詳情表 L211", completed: false },
+                        { text: "空白單據使用詳情表", completed: false },
+                        { text: "廣告回信郵資及手續費月報表 L312", completed: false },
+                        { text: "信箱保證金收據", completed: false }
+                    ]
+                },
+                {
+                    name: "第二梯次（次日寄出，月帳冊內）",
+                    items: [
+                        { text: "4901 ×2", completed: false },
+                        { text: "銀行往來調節表（附存款餘額證明書、劃撥收支詳情表）", completed: false },
+                        { text: "預收／預付款詳情表 4591 ×2", completed: false },
+                        { text: "統一發票使用情形表 4X29", completed: false },
+                        { text: "統一發票檢核表 4X45", completed: false },
+                        { text: "銷項稅務資料月報表 4X27", completed: false },
+                        { text: "4691 及附件 ×1", completed: false },
+                        { text: "內部往來撥收明細表 4699 ×1", completed: false },
+                        { text: "票券收發月報表 4B02 ×3", completed: false },
+                        { text: "L211", completed: false }
+                    ]
+                },
+                {
+                    name: "出納報表",
+                    items: [
+                        { text: "4901、4B02、4B03、T006、每月清查代售商品結果表、4B52", completed: false }
+                    ]
+                }
+            ]
+        },
+        {
+            title: "五、法扣",
+            subgroups: [
+                {
+                    name: "支票退票",
+                    items: [
+                        { text: "0604 → ① → 支票上的帳號 → 平行線（否）→ 現金", completed: false },
+                        { text: "1229 → 黃色調整單 → 金額負數", completed: false },
+                        { text: "1521 → 發文字號（公文）", completed: false }
+                    ]
+                },
+                {
+                    name: "提款單",
+                    items: [
+                        { text: "8707 抄局帳號：1113 → 05 印 → Z112（4612 改）", completed: false },
+                        { text: "法扣印在 4611／5202016506", completed: false },
+                        { text: "支出 → 其它 → 法扣（摘要）備", completed: false }
+                    ]
+                },
+                {
+                    name: "法院公文（禁止）",
+                    items: [
+                        { text: "8707 裡的錢超過公文背面的錢，就一定要扣錢", completed: false },
+                        { text: "1606 申請強制凍結，印在 8707 下方", completed: false },
+                        { text: "注意有無特殊註記；若為警示帳戶，打給儲三股", completed: false },
+                        { text: "① 8707 不夠扣：異議狀（Z112→②→③，圖4為④）→ 今天日期 → 8707 裡面的$ → Y，印 2 張附件（YNNY）", completed: false },
+                        { text: "② 8707 有$：1606 陳報狀；1606 回存／4511 入薪資／4513 改", completed: false },
+                        { text: "4474 查其他人的 4430；4477 查 4438 的序號", completed: false }
+                    ]
+                }
+            ]
+        }
+    ];
+
+    // 從 localStorage 讀取資料，若無則使用預設資料
+    let appData = JSON.parse(localStorage.getItem('workflow_data')) || defaultData;
+    let currentTabIndex = 0;
+
+    function saveData() {
+        localStorage.setItem('workflow_data', JSON.stringify(appData));
+    }
+
+    function render() {
+        const container = document.getElementById('tabsContainer');
+        container.innerHTML = '';
+
+        appData.forEach((tab, tabIndex) => {
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `tab-content ${tabIndex === currentTabIndex ? 'active' : ''}`;
+            
+            let html = `<h2 class="section-title">${tab.title}</h2>`;
+
+            tab.subgroups.forEach((group, groupIndex) => {
+                html += `
+                    <div class="category-group">
+                        <h3>${group.name}</h3>
+                        <ul class="item-list">
+                `;
+
+                group.items.forEach((item, itemIndex) => {
+                    html += `
+                        <li class="${item.completed ? 'completed' : ''}">
+                            <span class="item-text" onclick="toggleItem(${tabIndex}, ${groupIndex}, ${itemIndex})">${escapeHtml(item.text)}</span>
+                            <button class="btn btn-danger" onclick="deleteItem(${tabIndex}, ${groupIndex}, ${itemIndex})">刪除</button>
+                        </li>
+                    `;
+                });
+
+                html += `
+                        </ul>
+                    </div>
+                `;
+            });
+
+            // 新增項目的表單
+            html += `
+                <div class="add-form">
+                    <input type="text" id="input-${tabIndex}" placeholder="請輸入新的項目內容..." onkeypress="handleKeyPress(event, ${tabIndex})">
+                    <button class="btn" onclick="addItem(${tabIndex})">新增項目</button>
+                </div>
+            `;
+
+            contentDiv.innerHTML = html;
+            container.appendChild(contentDiv);
+        });
+    }
+
+    function switchTab(index) {
+        currentTabIndex = index;
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx === index) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach((content, idx) => {
+            if (idx === index) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+    }
+
+    function toggleItem(tabIdx, groupIdx, itemIdx) {
+        appData[tabIdx].subgroups[groupIdx].items[itemIdx].completed = !appData[tabIdx].subgroups[groupIdx].items[itemIdx].completed;
+        saveData();
+        render();
+    }
+
+    function deleteItem(tabIdx, groupIdx, itemIdx) {
+        if (confirm('確定要刪除這個項目嗎？')) {
+            appData[tabIdx].subgroups[groupIdx].items.splice(itemIdx, 1);
+            saveData();
+            render();
+        }
+    }
+
+    function addItem(tabIdx) {
+        const input = document.getElementById(`input-${tabIdx}`);
+        const text = input.value.trim();
+        if (!text) {
+            alert('請輸入項目內容！');
+            return;
+        }
+
+        // 預設新增至第一個子群組（若無子群組則建一個預設的）
+        if (appData[tabIdx].subgroups.length === 0) {
+            appData[tabIdx].subgroups.push({ name: "補充事項", items: [] });
+        }
+
+        appData[tabIdx].subgroups[0].items.push({ text: text, completed: false });
+        input.value = '';
+        saveData();
+        render();
+    }
+
+    function handleKeyPress(event, tabIdx) {
+        if (event.key === 'Enter') {
+            addItem(tabIdx);
+        }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/'/g, "&#039;");
+    }
+
+    // 初次載入渲染
+    render();
+</script>
+
+</body>
+</html>
